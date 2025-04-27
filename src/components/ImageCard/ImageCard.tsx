@@ -1,22 +1,28 @@
-import css from "./ImageCard.module.css";
+//* Libraries
+import style from "./ImageCard.module.css";
+import { motion } from "framer-motion";
 
-type PropsImageCard = {
-  alt_description: string;
-  urls: { regular: string; small: string };
-  updateModalStateData: (url: string, alt: string) => void;
+//* TS
+import { ImageDataType } from "../../App.types";
+type Props = {
+  data: ImageDataType;
 };
-const ImageCard = ({
-  alt_description,
-  urls,
-  updateModalStateData,
-}: PropsImageCard) => {
+
+const ImageCard: React.FC<Props> = ({ data }) => {
   return (
-    <div
-      className={css.card}
-      onClick={() => updateModalStateData(urls.regular, alt_description)}
+    <motion.div
+      className={style.imgWrapper}
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -50 }}
+      transition={{ duration: 0.4 }}
     >
-      <img className={css.cardImage} src={urls.small} alt={alt_description} />
-    </div>
+      <img
+        className={style.imgGallery}
+        src={data.urls.regular}
+        alt={data.alt_description}
+      />
+    </motion.div>
   );
 };
 

@@ -1,80 +1,56 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+//* React
+import { useState, useEffect } from "react";
 import "./App.css";
-import SearchBar from "./components/SearchBar/SearchBar";
-import ImageGallery from "./components/ImageGallery/ImageGallery";
-import Loader from "./components/Loader/Loader";
-import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
-import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
-import ImageModal from "./components/ImageModal/ImageModal";
-import { Toaster } from "react-hot-toast";
-import fetchImages from "./services/api";
 
-interface Image {
-  id: number;
-  alt_description: string;
-  urls: {
-    small: string;
-    regular: string;
-  };
-}
-interface fetchImagesResponse {
-  total: number;
-  total_pages: number;
-  results: Image[];
-}
+//* Components
+import SearchBar from "./components/searchbar/SearchBar";
+import ImageGallery from "./components/imagegallery/ImageGallery";
+import LoadMoreBtn from "./components/loadmorebtn/LoadMoreBtn";
+import Loader from "./components/loader/Loader";
+import ErrorMessage from "./components/errormessage/ErrorMessage";
+import LangSwitcher from "./components/langswitcher/LangSwitcher";
+import { IoMenuSharp } from "react-icons/io5";
 
-function App() {
+import ImageModal from "./components/imagemodal/ImageModal";
+import Modal from "react-modal";
+Modal.setAppElement("#root");
+
+//* Import fetch function
+import { FetchImages } from "./FetchImages";
+
+//* TS
+import { ImageDataType } from "./App.types";
+
+const App: React.FC = () => {
+  const [galleryData, setGalleryData] = useState<ImageDataType[]>([]);
+  const [userQuery, setUserQuery] = useState<string>("");
   const [page, setPage] = useState<number>(1);
-  const [queryValue, setQueryValue] = useState<string>("");
-  const [gallery, setGallery] = useState<Image[]>([]);
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isError, setIsError] = useState<boolean>(false);
-  const [totalPages, setTotalPages] = useState<number>(0);
+  const [error, setError] = useState<boolean>(false);
 
-  const [modalIsOpen, setIsOpen] = useState<boolean>(false);
-  const [modalImage, setModalImage] = useState<string>("");
-  const [altDescription, setAltDescription] = useState<string>("");
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
+  const [modalImage, setModalImage] = useState<ImageDataType | null>(null);
 
-  const ref = useRef<HTMLDivElement>(null!);
-  const maxImages = 50;
+  const [langModalIsOpen, setLangModalIsOpen] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (queryValue === "") return;
+  const handleCloseLangModal = (): void => {
+    setLangModalIsOpen(false);
+  };
 
-    const handleSearch = async () => {
-      try {
-        setIsLoading(true);
-        setIsError(false);
-        const data: fetchImagesResponse = await fetchImages(queryValue, page);
-        console.log("data: ", data);
-        if (data.total === 0) return;
+  const openModal = (imageData: ImageDataType): void => {
+    setModalImage(imageData);
+    setModalIsOpen(true);
+  };
 
-        setGallery((prevGallery) => {
-          const updatedGallery = [...prevGallery, ...data.results];
-          if (updatedGallery.length > maxImages) {
-            return updatedGallery.slice(0, maxImages);
-          }
-          return updatedGallery;
-        });
-        setTotalPages(data.total_pages);
-      } catch (error) {
-        setIsError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    handleSearch();
-  }, [page, queryValue]);
+  const closeModal = (): void => {
+    setModalImage(null);
+    setModalIsOpen(false);
+  };
 
-  useEffect(() => {
-    if (page === 1) return;
-
-    ref.current.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [page, gallery]);
-
-  const handleQuery = (newQuery: string): void => {
-    setQueryValue(newQuery);
-    setGallery([]);
+  const handleSearch = (topic: string): void => {
+    setGalleryData([]);
+    setUserQuery(topic);
     setPage(1);
   };
 
@@ -82,47 +58,69 @@ function App() {
     setPage(page + 1);
   };
 
-  const isActive = useMemo(() => page === totalPages, [page, totalPages]);
+  useEffect((): void => {
+    if (userQuery === "") {
+      return;
+    }
 
-  const openModal = (): void => {
-    setIsOpen(true);
-  };
+    const getGalleryData = async (): Promise<void> => {
+      try {
+        setIsLoading(true);
+        setError(false);
 
-  const closeModal = (): void => {
-    setIsOpen(false);
-  };
+        const fetchGalleryData = await FetchImages({ topic: userQuery, page });
+        const results: ImageDataType[] = fetchGalleryData.results;
+        setGalleryData((prevPhotos) => [...prevPhotos, ...results]);
+      } catch (error) {
+        setError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const updateModalStateData = (src: string, alt: string): void => {
-    setModalImage(src);
-    setAltDescription(alt);
-  };
+    getGalleryData();
+  }, [userQuery, page]);
 
   return (
-    <div ref={ref}>
-      <SearchBar onSubmit={handleQuery} />
-      {gallery.length > 0 && (
-        <ImageGallery
-          gallery={gallery}
-          openModal={openModal}
-          updateModalStateData={updateModalStateData}
-        />
+    <>
+      <header>
+        <SearchBar onSearch={handleSearch} />
+        <button
+          className="menu-btn"
+          onClick={(): void => {
+            setLangModalIsOpen(true);
+          }}
+        >
+          <IoMenuSharp className="menu-icon" />
+        </button>
+      </header>
+
+      {langModalIsOpen && (
+        <LangSwitcher handleCloseLangModal={handleCloseLangModal} />
       )}
+
+      {galleryData.length > 0 && (
+        <ImageGallery galleryArr={galleryData} openModal={openModal} />
+      )}
+
       {isLoading && <Loader />}
-      {isError && (
-        <ErrorMessage message="Щось пішло не так. Спробуйте ще раз." />
+      {error && <ErrorMessage />}
+
+      {galleryData.length > 0 && (
+        <LoadMoreBtn handleLoadMore={handleLoadMore} />
       )}
-      {gallery.length > 0 && !isLoading && !isError && (
-        <LoadMoreBtn handleLoadMore={handleLoadMore} isActive={isActive} />
-      )}
-      <ImageModal
-        modalIsOpen={modalIsOpen}
-        closeModal={closeModal}
-        src={modalImage}
-        alt={altDescription}
-      />
-      <Toaster position="top-right" reverseOrder={true} />
-    </div>
+
+      <Modal
+        isOpen={modalIsOpen}
+        onRequestClose={closeModal}
+        className={`modal ${modalIsOpen ? "modalIsOpen" : ""}`}
+        overlayClassName={`overlay ${modalIsOpen ? "overlayIsOpen" : ""}`}
+        closeTimeoutMS={300}
+      >
+        {modalIsOpen && <ImageModal modalImage={modalImage} />}
+      </Modal>
+    </>
   );
-}
+};
 
 export default App;

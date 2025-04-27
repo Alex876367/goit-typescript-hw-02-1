@@ -1,38 +1,90 @@
-import toast from "react-hot-toast";
-import { Field, Form, Formik } from "formik";
-import { FC } from "react";
+//* Libraries
+import style from "./SearchBar.module.css";
+import toast, { Toaster } from "react-hot-toast";
+import { motion } from "framer-motion";
+import { FiSearch } from "react-icons/fi";
+import { useLang } from "../../hook/useLang";
+import { FormEvent } from "react";
 
-import css from "./SearchBar.module.css";
-
-const initialValues = { query: "" };
-type SearchBarProps = {
-  onSubmit: (query: string) => void;
+//* TS
+type Props = {
+  onSearch: (topic: string) => void;
 };
-const SearchBar: FC<SearchBarProps> = ({ onSubmit }) => {
+
+const SearchBar: React.FC<Props> = ({ onSearch }) => {
+  const langCtx = useLang();
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+
+    const form = event.target as HTMLFormElement;
+    const input = form.elements.namedItem(
+      "galleryUserQuery"
+    ) as HTMLInputElement;
+
+    if (input.value.trim() === "") {
+      toast("Please enter something!", {
+        icon: "📌",
+      });
+      return;
+    }
+
+    onSearch(input.value);
+    form.reset();
+  };
+
   return (
-    <Formik
-      initialValues={initialValues}
-      onSubmit={(values, actions) => {
-        if (!values.query) {
-          toast.error("Please enter the value in the search field");
-          return;
-        }
-        onSubmit(values.query);
-        actions.resetForm();
-      }}
-    >
-      <Form className={css.searchform}>
-        <Field
-          className={css.searchInput}
-          name="query"
-          type="search"
-          autoComplete="off"
-          autoFocus
-          placeholder="Search images and photos"
-        />
-        <button type="submit">Search</button>
-      </Form>
-    </Formik>
+    <>
+      {langCtx.lang === "en" ? (
+        <motion.div
+          className={style.headerWrapper}
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <form className={style.formWrapper} onSubmit={handleSubmit}>
+            <input
+              className={style.userInput}
+              name="galleryUserQuery"
+              type="text"
+              autoComplete="off"
+              maxLength={30}
+              placeholder="Images..."
+            />
+            <FiSearch className={style.searchIcon} />
+            <button className={style.searchBtn} type="submit">
+              Search
+            </button>
+          </form>
+          <Toaster position="top-right" reverseOrder={false} />
+        </motion.div>
+      ) : (
+        <motion.div
+          className={style.headerWrapper}
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <form className={style.formWrapper} onSubmit={handleSubmit}>
+            <input
+              className={style.userInput}
+              name="galleryUserQuery"
+              type="text"
+              autoComplete="off"
+              maxLength={30}
+              placeholder="Зображення..."
+            />
+            <FiSearch className={style.searchIcon} />
+            <button className={style.searchBtn} type="submit">
+              Пошук
+            </button>
+          </form>
+          <Toaster position="top-right" reverseOrder={false} />
+        </motion.div>
+      )}
+    </>
   );
 };
 

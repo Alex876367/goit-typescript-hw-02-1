@@ -1,30 +1,40 @@
-import Modal from "react-modal";
-import css from "./ImageModal.module.css";
-import { FC } from "react";
-interface ImageModalProps {
-  modalIsOpen: boolean;
-  closeModal: () => void;
-  src: string;
-  alt: string;
-}
-const ImageModal: FC<ImageModalProps> = ({
-  modalIsOpen,
-  closeModal,
-  src,
-  alt,
-}) => {
-  return (
-    <Modal
-      isOpen={modalIsOpen}
-      onRequestClose={closeModal}
-      className={css.modal}
-      overlayClassName={css.overlay}
-    >
-      <div>
-        <img className={css.modalImg} src={src} alt={alt} />
-        <p className={css.gallerytitle}>{alt}</p>
+//* Libraries
+import style from "./ImageModal.module.css";
+import { FaRegHeart } from "react-icons/fa";
+import { FaHeart } from "react-icons/fa6";
+
+//* TS
+import { ImageDataType } from "../../App.types";
+type Props = {
+  modalImage: ImageDataType | null;
+};
+
+const ImageModal: React.FC<Props> = ({ modalImage }) => {
+  if (modalImage === null) {
+    return (
+      <div className={style.backdrop}>
+        <p>Error</p>
       </div>
-    </Modal>
+    );
+  }
+  return (
+    <div className={style.backdrop}>
+      <img className={style.modalImage} src={modalImage.urls.full} alt="" />
+
+      <div className={style.imageDescriptionWrapper}>
+        <p className={style.nameText}>
+          <span className={style.accent}>Name: </span>
+          {modalImage.alt_description}
+        </p>
+        <p>
+          <span className={style.accent}>Author: </span>
+          {modalImage.user.name}
+        </p>
+        <button>
+          <FaRegHeart />
+        </button>
+      </div>
+    </div>
   );
 };
 

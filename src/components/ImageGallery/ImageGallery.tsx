@@ -1,38 +1,33 @@
-import { FC } from "react";
-import ImageCard from "../ImageCard/ImageCard";
-import css from "./ImageGallery.module.css";
+//* Libraries & Components
+import style from "./ImageGallery.module.css";
+import { motion, AnimatePresence } from "framer-motion";
+import ImageCard from "../imagecard/ImageCard";
 
-type Urls = {
-  regular: string;
-  small: string;
-};
-type ImageData = {
-  id: number;
-  alt_description: string;
-  urls: Urls;
-};
-interface PropsImageGallery {
-  gallery: ImageData[];
-  openModal: () => void;
-  updateModalStateData: (url: string, alt: string) => void;
-}
+//* TS
+import { ImageDataType } from "../../App.types";
 
-const ImageGallery: FC<PropsImageGallery> = ({
-  gallery,
-  openModal,
-  updateModalStateData,
-}) => {
+type Props = {
+  galleryArr: ImageDataType[];
+  openModal: (imageData: ImageDataType) => void;
+};
+
+const ImageGallery: React.FC<Props> = ({ galleryArr, openModal }) => {
   return (
-    <ul className={css.gallery}>
-      {gallery.map(({ id, alt_description, urls }) => (
-        <li className={css.gallerycard} key={id} onClick={openModal}>
-          <ImageCard
-            urls={urls}
-            alt_description={alt_description}
-            updateModalStateData={updateModalStateData}
-          />
-        </li>
-      ))}
+    <ul className={style.imageList}>
+      <AnimatePresence mode="popLayout">
+        {galleryArr.map((element) => (
+          <motion.li
+            className={style.imageItem}
+            key={element.id}
+            onClick={(): void => openModal(element)}
+            layout
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ImageCard data={element} />
+          </motion.li>
+        ))}
+      </AnimatePresence>
     </ul>
   );
 };

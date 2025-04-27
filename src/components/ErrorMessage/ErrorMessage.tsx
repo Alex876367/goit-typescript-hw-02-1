@@ -1,12 +1,9 @@
-import css from "./ErrorMessage.module.css";
-import { FC } from "react";
-interface PropsMessage {
-  message: string;
-}
-const ErrorMessage: React.FC<PropsMessage> = ({ message }) => {
+import style from "./ErrorMessage.module.css";
+
+const ErrorMessage = () => {
   return (
-    <div className={css.errorMessage}>
-      <p>{message}</p>
+    <div>
+      <p>Oops! Something went wrong. Try reloading page.</p>
     </div>
   );
 };
